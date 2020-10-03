@@ -16,3 +16,4 @@
 /Makefile
 # Xcode Project files
 /*.xcodeproj
+/Plugins/
