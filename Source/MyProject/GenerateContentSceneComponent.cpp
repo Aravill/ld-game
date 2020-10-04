@@ -17,7 +17,7 @@ struct Room {
 };
 
 UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize, const int MinSpace) {
-	FString data = "ID;x;y;width;height;type";
+	FString data = "ID,X,Y,Width,Height,Type";
 	int id = 0;
 	FString type = "wall";
 
@@ -50,10 +50,10 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 			b.width = actual.width;
 
 			if (x != 0) {
-				data += FString::Printf(TEXT("\n%d;%d;%d;%d;%d;%s"), id++, actual.x, actual.y + y, x, 1, *type);
+				data += FString::Printf(TEXT("\n%d.%d,%d,%d,%d,%s"), id++, actual.x, actual.y + y, x, 1, *type);
 			}
 			if ((actual.width - x - MinSpace) != 0) {
-				data += FString::Printf(TEXT("\n%d;%d;%d;%d;%d;%s"), id++, actual.x + x + MinSpace, actual.y + y, actual.width - x - MinSpace, 1, *type);
+				data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, actual.x + x + MinSpace, actual.y + y, actual.width - x - MinSpace, 1, *type);
 			}
 		}
 		else {
@@ -71,10 +71,10 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 			b.width = actual.width - x - 1;
 
 			if (y != 0) {
-				data += FString::Printf(TEXT("\n%d;%d;%d;%d;%d;%s"), id++, actual.x + x, actual.y, 1, y, *type);
+				data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, actual.x + x, actual.y, 1, y, *type);
 			}
 			if ((actual.height - y - MinSpace) != 0) {
-				data += FString::Printf(TEXT("\n%d;%d;%d;%d;%d;%s"), id++, actual.x + x, actual.y + y + MinSpace, 1, actual.height - y - MinSpace, *type);
+				data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, actual.x + x, actual.y + y + MinSpace, 1, actual.height - y - MinSpace, *type);
 			}
 		}
 
@@ -100,7 +100,14 @@ UGenerateContentSceneComponent::UGenerateContentSceneComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	// ...
+	static ConstructorHelpers::FObjectFinder<UDataTable> mydatatable_BP(TEXT("DataTable'/Game/TopDownBP/Blueprints/data/template.template'"));
+
+	if (mydatatable_BP.Object)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("get datatable"));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("get datatable")));
+		datatable = mydatatable_BP.Object;
+	}
 }
 
 
