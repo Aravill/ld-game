@@ -17,3 +17,4 @@
 # Xcode Project files
 /*.xcodeproj
 /Plugins/
+.vs/*
