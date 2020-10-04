@@ -20,6 +20,12 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 	FString data = "ID,X,Y,Width,Height,Type";
 	int id = 0;
 	FString type = "wall";
+	TArray<TArray<bool>> walls;
+    for(int x = 0; x < DimensionSize; ++x) {
+		TArray<bool> wall;
+		wall.Init(false, DimensionSize);
+		walls.Add(wall);
+    }
 
 	Room room;
 	room.x = 0;
@@ -34,10 +40,14 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 		Room a;
 		Room b;
 
-		int horizontal = actual.height < 2*MinSpace ? 0 : actual.width < 2*MinSpace ? 1 : FMath::RandRange(0, 1);
+		int horizontal = actual.height <= (2 * MinSpace) ? 0 : actual.width <= (2 * MinSpace) ? 1 : FMath::RandRange(0, 1);
 		if (horizontal) {
-			int y = FMath::RandRange(1, actual.height - 2);
-			int x = FMath::RandRange(0, actual.width - MinSpace);
+			int y = FMath::RandRange(MinSpace, actual.height - MinSpace - 1);
+			int x = (actual.x > 0) && (walls[actual.x - 1][actual.y + y] == false)
+				? 0
+				: ((actual.x + actual.width) < DimensionSize) && (walls[actual.x + actual.width][actual.y + y] == false)
+				? (actual.width - MinSpace)
+				: FMath::RandRange(0, actual.width - MinSpace);
 
 			a.x = actual.x;
 			a.y = actual.y;
@@ -51,14 +61,24 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 
 			if (x != 0) {
 				data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, actual.x, actual.y + y, x, 1, *type);
+                for(int i = 0; i < x; ++i) {
+					walls[actual.x + i][actual.y + y] = true;
+                }
 			}
 			if ((actual.width - x - MinSpace) != 0) {
 				data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, actual.x + x + MinSpace, actual.y + y, actual.width - x - MinSpace, 1, *type);
+				for (int i = 0; i < actual.width - x - MinSpace; ++i) {
+					walls[actual.x + x + MinSpace + i][actual.y + y] = true;
+				}
 			}
 		}
 		else {
-			int x = FMath::RandRange(1, actual.width - 2);
-			int y = FMath::RandRange(0, actual.height - MinSpace);
+			int x = FMath::RandRange(MinSpace, actual.width - MinSpace - 1);
+			int y = (actual.y > 0) && (walls[actual.x + x][actual.y - 1] == false)
+				? 0
+				: ((actual.y + actual.height) < DimensionSize) && (walls[actual.x + x][actual.y + actual.height] == false)
+				? (actual.height - MinSpace)
+				: FMath::RandRange(0, actual.height - MinSpace);
 
 			a.x = actual.x;
 			a.y = actual.y;
@@ -72,16 +92,22 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 
 			if (y != 0) {
 				data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, actual.x + x, actual.y, 1, y, *type);
+				for (int i = 0; i < y; ++i) {
+					walls[actual.x + x][actual.y + i] = true;
+				}
 			}
 			if ((actual.height - y - MinSpace) != 0) {
 				data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, actual.x + x, actual.y + y + MinSpace, 1, actual.height - y - MinSpace, *type);
+				for (int i = 0; i < actual.height - y - MinSpace; ++i) {
+					walls[actual.x + x][actual.y + y + MinSpace + i] = true;
+				}
 			}
 		}
 
-		if (a.width > MinSpace*2 || a.height > MinSpace*2) {
+		if ((a.width > (MinSpace*2)) || (a.height > (MinSpace*2))) {
 			stack.Add(a);
 		}
-		if (b.width > MinSpace*2 || b.height > MinSpace*2) {
+		if ((b.width > (MinSpace*2)) || (b.height > (MinSpace*2))) {
 			stack.Add(b);
 		}
 	}
