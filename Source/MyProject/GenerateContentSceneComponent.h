@@ -26,7 +26,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	UDataTable* GenerateData(const int DimensionSize, const int MinSpace);
+	UDataTable* GenerateData(const int Seed, FIntPoint OilInterval, const int DimensionSize, const int MinSpace);
 
 private:
 	UPROPERTY()

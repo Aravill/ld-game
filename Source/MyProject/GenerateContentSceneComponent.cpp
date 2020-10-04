@@ -16,10 +16,124 @@ struct Room {
 	int height;
 };
 
-UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize, const int MinSpace) {
+bool findPath(Room actual, TArray<Room>& path, TArray<TArray<bool>>& walls, TArray<TArray<bool>>& visited, FVector2D finish) {
+	path.Add(actual);
+
+	visited[actual.x][actual.y] = true;
+	if (actual.x == finish.X && actual.y == finish.Y) {
+		return true;
+	}
+
+	Room child;
+	if (actual.x < finish.X && walls[actual.x + 1][actual.y] == false && visited[actual.x + 1][actual.y] == false) {
+		// Go left
+		child.x = actual.x + 1;
+		child.y = actual.y;
+		if (findPath(child, path, walls, visited, finish)) {
+			return true;
+		}
+	}
+	if (actual.y < finish.Y && walls[actual.x][actual.y + 1] == false && visited[actual.x][actual.y + 1] == false) {
+		// Go up
+		child.x = actual.x;
+		child.y = actual.y + 1;
+		if (findPath(child, path, walls, visited, finish)) {
+			return true;
+		}
+	}
+	if (actual.x > 0 && walls[actual.x - 1][actual.y] == false && visited[actual.x - 1][actual.y] == false) {
+		// Go right
+		child.x = actual.x - 1;
+		child.y = actual.y;
+		if (findPath(child, path, walls, visited, finish)) {
+			return true;
+		}
+	}
+	if (actual.y > 0 && walls[actual.x][actual.y - 1] == false && visited[actual.x][actual.y - 1] == false) {
+		// Go down
+		child.x = actual.x;
+		child.y = actual.y - 1;
+		if (findPath(child, path, walls, visited, finish)) {
+			return true;
+		}
+	}
+
+	path.Pop();
+	return false;
+}
+
+FString generateOils(TArray<TArray<bool>>& walls, TArray<Room>& path, int* id, FIntPoint oilInterval) {
+	FString oil = "oil";
+	FString data = "";
+
+	int counter = 0;
+	for (int index = 0; index < path.Num(); ++index) {
+		counter++;
+		if (counter < oilInterval.X) {
+			continue;
+		}
+		Room actual = path[index];
+		if (counter % oilInterval.Y == 0) {
+			data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), (*id)++, actual.x, actual.y, 1, 1, *oil);
+			counter = 0;
+			continue;
+		}
+		int count = 0;
+		if (actual.x > 0 && walls[actual.x - 1][actual.y] == false && (
+				(actual.y == 0 || walls[actual.x - 1][actual.y - 1] == true) &&
+			    ((actual.y == walls[actual.x - 1].Num() - 1) || walls[actual.x - 1][actual.y + 1] == true)
+			)
+		) {
+			count++;
+		}
+		if (actual.x < walls.Num() - 1 && walls[actual.x + 1][actual.y] == false && (
+				(actual.y == 0 || walls[actual.x + 1][actual.y - 1] == true) &&
+				((actual.y == walls[actual.x + 1].Num() - 1) || walls[actual.x + 1][actual.y + 1] == true)
+			)
+		) {
+			count++;
+		}
+		if (actual.y > 0 && walls[actual.x][actual.y - 1] == false && (
+				(actual.x == 0 || walls[actual.x - 1][actual.y - 1] == true) &&
+				((actual.x == walls.Num() - 1) || walls[actual.x + 1][actual.y - 1] == true)
+			)
+		) {
+			count++;
+		}
+		if (actual.y < walls[actual.x].Num() - 1 && walls[actual.y][actual.y + 1] == false && (
+				(actual.x == 0 || walls[actual.x - 1][actual.y + 1] == true) &&
+				((actual.x == walls.Num() - 1) || walls[actual.x + 1][actual.y + 1] == true)
+			)
+		) {
+			count++;
+		}
+		if (count > 2) {
+			data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), (*id)++, actual.x, actual.y, 1, 1, *oil);
+			counter = 0;
+		}
+	}
+	return data;
+}
+
+UDataTable* UGenerateContentSceneComponent::GenerateData(const int Seed, FIntPoint OilInterval, const int DimensionSize, const int MinSpace) {
 	FString data = "ID,X,Y,Width,Height,Type";
 	int id = 0;
 	FString type = "wall";
+	FString start = "start";
+	FString finish = "finish";
+	FString treasure = "treasure";
+	FMath::RandInit(Seed);
+
+	if (OilInterval.X == 0) {
+		OilInterval.X = 16;
+	}
+
+	if (OilInterval.Y == 0) {
+		OilInterval.Y = 32;
+	}
+
+	// PREPARE MAP
+
 	TArray<TArray<bool>> walls;
 	for (int x = 0; x < DimensionSize; ++x) {
 		TArray<bool> wall;
@@ -27,10 +141,16 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 		walls.Add(wall);
 	}
 
-	data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, -1, -1, DimensionSize+1, 1, *type);
-    	data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, DimensionSize, -1, 1, DimensionSize+1, *type);
-    	data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, -1, 0, 1, DimensionSize+1, *type);
-    	data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, 0, DimensionSize, DimensionSize+1, 1, *type);
+    // INIT START, FINISH AND WALLS
+
+	data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, 0, 0, 1, 1, *start);
+	data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, DimensionSize - 1, DimensionSize - 1, 1, 1, *finish);
+	data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, -1, -1, DimensionSize + 1, 1, *type);
+	data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, DimensionSize, -1, 1, DimensionSize + 1, *type);
+	data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, -1, 0, 1, DimensionSize + 1, *type);
+	data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, 0, DimensionSize, DimensionSize + 1, 1, *type);
+
+	// DEFINE THE ROOM
 
 	Room room;
 	room.x = 0;
@@ -40,15 +160,22 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 	TArray<Room> stack;
 	stack.Add(room);
 
+	// GENERATE MAZE
+
 	while (stack.Num() > 0) {
+		// Current room to split - it should be doable
 		Room actual = stack.Pop();
 		Room a;
 		Room b;
 		int counter = 0;
 
+		// If height or width is too small, split in the other orientation, otw random
 		int horizontal = actual.height <= (2 * MinSpace) ? 0 : actual.width <= (2 * MinSpace) ? 1 : FMath::RandRange(0, 1);
 		if (horizontal) {
+			// Find the splitting coordinate
 			int y = FMath::RandRange(MinSpace, actual.height - MinSpace - 1);
+
+			// If there is an entrance to the room in the way of the wall on both sides, try to find another coordinate
 			while ((actual.x > 0) && (walls[actual.x - 1][actual.y + y] == false) &&
 				((actual.x + actual.width) < DimensionSize) && (walls[actual.x + actual.width][actual.y + y] == false)
 			) {
@@ -59,12 +186,17 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 					break;
 				}
 			}
+			// If we tried 10 times and could not find suitable coordinate, give up and leave slightly bigger room
 			if (counter == 10) continue;
+
+			// Find a coordinate for doorway in the generated wall so that it does not block any entrances
 			int x = (actual.x > 0) && (walls[actual.x - 1][actual.y + y] == false)
 				? 0
 				: ((actual.x + actual.width) < DimensionSize) && (walls[actual.x + actual.width][actual.y + y] == false)
 				? (actual.width - MinSpace)
 				: FMath::RandRange(0, actual.width - MinSpace);
+
+			// Create two new rooms split by the generated wall
 
 			a.x = actual.x;
 			a.y = actual.y;
@@ -76,19 +208,23 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 			b.height = actual.height - y - 1;
 			b.width = actual.width;
 
+			// Output those walls
 			if (x != 0) {
 				data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, actual.x, actual.y + y, x, 1, *type);
+				// Save to map for later
 				for (int i = 0; i < x; ++i) {
 					walls[actual.x + i][actual.y + y] = true;
 				}
 			}
 			if ((actual.width - x - MinSpace) != 0) {
 				data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, actual.x + x + MinSpace, actual.y + y, actual.width - x - MinSpace, 1, *type);
+				// Save to map for later
 				for (int i = 0; i < actual.width - x - MinSpace; ++i) {
 					walls[actual.x + x + MinSpace + i][actual.y + y] = true;
 				}
 			}
 		}
+		// Mirror for vertical
 		else {
 			int x = FMath::RandRange(MinSpace, actual.width - MinSpace - 1);
 			while (
@@ -133,6 +269,7 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 			}
 		}
 
+		// If it makes sense to split the room further, add it to stack
 		if (((a.width > (MinSpace * 2)) && (a.height >= MinSpace)) || ((a.height > (MinSpace * 2)) && (a.width >= MinSpace))) {
 			stack.Add(a);
 		}
@@ -141,8 +278,37 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 		}
 	}
 
+	// GENERATE OIL
+
+	// Use DFS to go through the maze and spawn oil with certain probability that increases depending on the distance from last spawned oil
+
+	Room tile;
+	tile.x = 0;
+	tile.y = 0;
+	tile.width = 0;
+	stack.Add(tile);
+
+	TArray<TArray<bool>> visited;
+	for (int x = 0; x < DimensionSize; ++x) {
+		TArray<bool> line;
+		line.Init(false, DimensionSize);
+		visited.Add(line);
+	}
+
+	bool result = findPath(tile, stack, walls, visited, FVector2D(DimensionSize - 1, DimensionSize - 1));
+	if (!result) {
+		FString error = "Could not find the exit.";
+		UE_LOG(LogTemp, Error, TEXT("%s"), *error);
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *data);
+	}
+	else {
+		data += generateOils(walls, stack, &id, OilInterval);
+	}
+
+	// Log generated maze
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *data);
 
+	// Load the data
 	datatable->CreateTableFromCSVString(data);
 
 	return datatable;
