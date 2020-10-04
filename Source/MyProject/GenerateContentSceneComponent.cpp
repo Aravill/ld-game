@@ -34,7 +34,7 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 		Room a;
 		Room b;
 
-		int horizontal = FMath::RandRange(0, 1);
+		int horizontal = actual.height < 2*MinSpace ? 0 : actual.width < 2*MinSpace ? 1 : FMath::RandRange(0, 1);
 		if (horizontal) {
 			int y = FMath::RandRange(1, actual.height - 2);
 			int x = FMath::RandRange(0, actual.width - MinSpace);
@@ -50,7 +50,7 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 			b.width = actual.width;
 
 			if (x != 0) {
-				data += FString::Printf(TEXT("\n%d.%d,%d,%d,%d,%s"), id++, actual.x, actual.y + y, x, 1, *type);
+				data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, actual.x, actual.y + y, x, 1, *type);
 			}
 			if ((actual.width - x - MinSpace) != 0) {
 				data += FString::Printf(TEXT("\n%d,%d,%d,%d,%d,%s"), id++, actual.x + x + MinSpace, actual.y + y, actual.width - x - MinSpace, 1, *type);
@@ -78,10 +78,10 @@ UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize
 			}
 		}
 
-		if (a.width > MinSpace && a.height > MinSpace) {
+		if (a.width > MinSpace*2 || a.height > MinSpace*2) {
 			stack.Add(a);
 		}
-		if (b.width > MinSpace && b.height > MinSpace) {
+		if (b.width > MinSpace*2 || b.height > MinSpace*2) {
 			stack.Add(b);
 		}
 	}
