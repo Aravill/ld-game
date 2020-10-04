@@ -14,14 +14,19 @@ struct FCustomMapData : public FTableRowBase
 	GENERATED_USTRUCT_BODY()
 
 public:
-
-	/** Name */
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Data)
-		FString name;
-
-	/** Extra HitPoints gained at this level */
+		int ID;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Data)
-		FString age;
+		int X;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Data)
+		int Y;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Data)
+		int Width;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Data)
+		int Height;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Data)
+		FString Type;
 };
 
 
