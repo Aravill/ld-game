@@ -12,11 +12,14 @@
  * 
  */
 UCLASS()
-class MYPROJECT_API UContentGenerator : public UBlueprintFunctionLibrary
+class MYPROJECT_API UContentGenerator : public UActorComponent
 {
 	GENERATED_BODY()
-
 public:
 	UFUNCTION(BlueprintCallable, Category="Generation")
-	static FString GenerateData(const int DimensionSize, const int MinSpace);
+	UDataTable *GenerateData(const int DimensionSize, const int MinSpace);
+
+private:
+	UPROPERTY()
+	UDataTable *datatable;
 };

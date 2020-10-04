@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
+#include "GenerateContentSceneComponent.h"
+
 #include "ContentGenerator.h"
 #include "MapDataTable.h"
 #include "Containers/UnrealString.h"
@@ -14,7 +16,7 @@ struct Room {
 	int height;
 };
 
-UDataTable *UContentGenerator::GenerateData(const int DimensionSize, const int MinSpace) {
+UDataTable* UGenerateContentSceneComponent::GenerateData(const int DimensionSize, const int MinSpace) {
 	FString data = "ID;x;y;width;height;type";
 	int id = 0;
 	FString type = "wall";
@@ -47,10 +49,10 @@ UDataTable *UContentGenerator::GenerateData(const int DimensionSize, const int M
 			b.height = actual.height - y - 1;
 			b.width = actual.width;
 
-			if(x != 0) {
+			if (x != 0) {
 				data += FString::Printf(TEXT("\n%d;%d;%d;%d;%d;%s"), id++, actual.x, actual.y + y, x, 1, *type);
 			}
-			if((actual.width - x - MinSpace) != 0) {
+			if ((actual.width - x - MinSpace) != 0) {
 				data += FString::Printf(TEXT("\n%d;%d;%d;%d;%d;%s"), id++, actual.x + x + MinSpace, actual.y + y, actual.width - x - MinSpace, 1, *type);
 			}
 		}
@@ -68,10 +70,10 @@ UDataTable *UContentGenerator::GenerateData(const int DimensionSize, const int M
 			b.height = actual.height;
 			b.width = actual.width - x - 1;
 
-			if(y != 0) {
+			if (y != 0) {
 				data += FString::Printf(TEXT("\n%d;%d;%d;%d;%d;%s"), id++, actual.x + x, actual.y, 1, y, *type);
 			}
-			if((actual.height - y - MinSpace) != 0) {
+			if ((actual.height - y - MinSpace) != 0) {
 				data += FString::Printf(TEXT("\n%d;%d;%d;%d;%d;%s"), id++, actual.x + x, actual.y + y + MinSpace, 1, actual.height - y - MinSpace, *type);
 			}
 		}
@@ -83,17 +85,40 @@ UDataTable *UContentGenerator::GenerateData(const int DimensionSize, const int M
 			stack.Add(b);
 		}
 	}
-	
+
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *data);
 
 	datatable->CreateTableFromCSVString(data);
 
 	return datatable;
 }
-//
-//UDataTable *UContentGenerator::GenerateMap() {
-//	UDataTable datatable; // FIXME: Another approach, maybe shared or unique pointers
-//	FString data = generateData();
-//	datatable.CreateTableFromCSVString(data);
-//	return &datatable;
-//}
+
+// Sets default values for this component's properties
+UGenerateContentSceneComponent::UGenerateContentSceneComponent()
+{
+	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
+	// off to improve performance if you don't need them.
+	PrimaryComponentTick.bCanEverTick = true;
+
+	// ...
+}
+
+
+// Called when the game starts
+void UGenerateContentSceneComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// ...
+	
+}
+
+
+// Called every frame
+void UGenerateContentSceneComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	// ...
+}
+
