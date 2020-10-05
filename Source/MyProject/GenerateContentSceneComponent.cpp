@@ -24,8 +24,19 @@ bool findPath(Room actual, TArray<Room>& path, TArray<TArray<bool>>& walls, TArr
 		return true;
 	}
 
+	int XLimit = finish.X + 1;
+	int YLimit = finish.Y + 1;
+
 	Room child;
-	if (actual.x < finish.X && walls[actual.x + 1][actual.y] == false && visited[actual.x + 1][actual.y] == false) {
+	if (( // It must be possible to go left
+		(actual.x + 1) < XLimit && walls[actual.x + 1][actual.y] == false && visited[actual.x + 1][actual.y] == false
+		) && ( // The left-left field must be a wall or unexplored [otw we could find a shorter path by skipping actual field]
+			actual.x + 2 >= XLimit || (walls[actual.x + 2][actual.y] == true || visited[actual.x + 2][actual.y] == false)
+			) && ( // The left-bottom field must be a wall or unexplored
+				actual.y - 1 < 0 || (walls[actual.x + 1][actual.y - 1] == true || visited[actual.x + 1][actual.y - 1] == false)
+				) && ( // The left-top field must be a wall or unexplored
+					actual.y + 1 >= YLimit || (walls[actual.x + 1][actual.y + 1] == true || visited[actual.x + 1][actual.y + 1] == false)
+					)) {
 		// Go left
 		child.x = actual.x + 1;
 		child.y = actual.y;
@@ -33,7 +44,15 @@ bool findPath(Room actual, TArray<Room>& path, TArray<TArray<bool>>& walls, TArr
 			return true;
 		}
 	}
-	if (actual.y < finish.Y && walls[actual.x][actual.y + 1] == false && visited[actual.x][actual.y + 1] == false) {
+	if ((
+		(actual.y + 1) < YLimit && walls[actual.x][actual.y + 1] == false && visited[actual.x][actual.y + 1] == false
+		) && ( // The top-top field must be a wall or unexplored [otw we could find a shorter path by skipping actual field]
+			actual.y + 2 >= YLimit || (walls[actual.x][actual.y + 2] == true || visited[actual.x][actual.y + 2] == false)
+			) && ( // The right-top field must be a wall or unexplored
+				actual.x - 1 < 0 || (walls[actual.x - 1][actual.y + 1] == true || visited[actual.x - 1][actual.y + 1] == false)
+				) && ( // The left-top field must be a wall or unexplored
+					actual.x + 1 >= XLimit || (walls[actual.x + 1][actual.y + 1] == true || visited[actual.x + 1][actual.y + 1] == false)
+					)) {
 		// Go up
 		child.x = actual.x;
 		child.y = actual.y + 1;
@@ -41,7 +60,15 @@ bool findPath(Room actual, TArray<Room>& path, TArray<TArray<bool>>& walls, TArr
 			return true;
 		}
 	}
-	if (actual.x > 0 && walls[actual.x - 1][actual.y] == false && visited[actual.x - 1][actual.y] == false) {
+	if ((
+		actual.x > 0 && walls[actual.x - 1][actual.y] == false && visited[actual.x - 1][actual.y] == false
+		)&& ( // The right-right field must be a wall or unexplored [otw we could find a shorter path by skipping actual field]
+			actual.x - 2 < 0 || (walls[actual.x-2][actual.y ] == true || visited[actual.x-2][actual.y ] == false)
+			) && ( // The right-bottom field must be a wall or unexplored
+				actual.y - 1 < 0 || (walls[actual.x - 1][actual.y - 1] == true || visited[actual.x - 1][actual.y - 1] == false)
+				) && ( // The right-top field must be a wall or unexplored
+					actual.y + 1 >= YLimit || (walls[actual.x - 1][actual.y + 1] == true || visited[actual.x - 1][actual.y + 1] == false)
+					)) {
 		// Go right
 		child.x = actual.x - 1;
 		child.y = actual.y;
@@ -49,7 +76,15 @@ bool findPath(Room actual, TArray<Room>& path, TArray<TArray<bool>>& walls, TArr
 			return true;
 		}
 	}
-	if (actual.y > 0 && walls[actual.x][actual.y - 1] == false && visited[actual.x][actual.y - 1] == false) {
+	if ((
+		actual.y > 0 && walls[actual.x][actual.y - 1] == false && visited[actual.x][actual.y - 1] == false
+		) && ( // The bottom-bottom field must be a wall or unexplored [otw we could find a shorter path by skipping actual field]
+			actual.y - 2 < 0 || (walls[actual.x][actual.y - 2] == true || visited[actual.x][actual.y - 2] == false)
+			) && ( // The right-bottom field must be a wall or unexplored
+				actual.x - 1 < 0 || (walls[actual.x - 1][actual.y - 1] == true || visited[actual.x - 1][actual.y - 1] == false)
+				) && ( // The left-bottom field must be a wall or unexplored
+					actual.x + 1 >= XLimit || (walls[actual.x + 1][actual.y - 1] == true || visited[actual.x + 1][actual.y - 1] == false)
+					)) {
 		// Go down
 		child.x = actual.x;
 		child.y = actual.y - 1;
